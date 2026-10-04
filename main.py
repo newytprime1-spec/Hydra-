@@ -18,7 +18,7 @@ def run_flask():
 
 # --- 2. BOT CONFIGURATION ---
 BOT_TOKEN = "8832229855:AAEOXxzWf3nPLDAAWD_tZk87stt_HlHTyIk"
-CHANNEL_USERNAME = "@HydraEscrowService"
+CHANNEL_USERNAME = "@HydraEscrowServices"
 GROUP_USERNAME = "@HydraEscrow"
 
 bot = telebot.TeleBot(BOT_TOKEN)
