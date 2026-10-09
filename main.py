@@ -1,3 +1,4 @@
+
 import os
 import threading
 from datetime import datetime, timedelta
@@ -16,10 +17,10 @@ def run_flask():
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
 
-# --- 2. BOT CONFIGURATION ---
-BOT_TOKEN = "8832229855:AAEOXxzWf3nPLDAAWD_tZk87stt_HlHTyIk"
-CHANNEL_USERNAME = "@HydraEscrowServices"
-GROUP_USERNAME = "@HydraEscrow"
+# --- 2. BOT CONFIGURATION (Fetched securely from Render) ---
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
+CHANNEL_USERNAME = "@HydraEscrowServices"  # Main Channel Handle
+GROUP_USERNAME = "@HydraEscrow"           # Main Group Handle
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
@@ -36,7 +37,6 @@ def is_subscribed(user_id):
 # --- 3. MESSAGE HANDLER ---
 @bot.message_handler(func=lambda message: message.chat.type in ['group', 'supergroup'])
 def check_channel_subscription(message):
-    # Only filter official group
     if message.chat.username and f"@{message.chat.username}".lower() != GROUP_USERNAME.lower():
         return
     
@@ -50,15 +50,15 @@ def check_channel_subscription(message):
     except Exception:
         pass
 
-    # If user (New or Old) is NOT subscribed to channel
+    # If user is NOT subscribed to channel
     if not is_subscribed(user_id):
-        # 1. Delete user's message
+        # 1. Delete message
         try:
             bot.delete_message(message.chat.id, message.message_id)
         except Exception:
             pass
         
-        # 2. Mute user for 10 minutes (or until verified)
+        # 2. Mute user for 10 minutes
         mute_until = datetime.now() + timedelta(minutes=10)
         formatted_time = mute_until.strftime("%d/%m/%Y %H:%M:%S")
         
@@ -72,14 +72,14 @@ def check_channel_subscription(message):
         except Exception:
             pass
         
-        # 3. Create exact inline buttons
+        # 3. Create inline verification buttons
         markup = InlineKeyboardMarkup()
         sub_btn = InlineKeyboardButton("📣 Subscribe to channel", url=f"https://t.me/{CHANNEL_USERNAME.replace('@', '')}")
         check_btn = InlineKeyboardButton("✅ OK | I subscribed", callback_data=f"checksub_{user_id}")
         markup.add(sub_btn)
         markup.add(check_btn)
         
-        # 4. Format exact warning message
+        # 4. Send formatted warning
         user_name = message.from_user.first_name
         warning_text = (
             f"[{user_name}](tg://user?id={user_id}) `[{user_id}]` to be accepted in the group, "
@@ -92,20 +92,17 @@ def check_channel_subscription(message):
         except Exception:
             pass
 
-# --- 4. BUTTON CLICK HANDLER (VERIFICATION) ---
+# --- 4. BUTTON CLICK HANDLER ---
 @bot.callback_query_handler(func=lambda call: call.data.startswith("checksub_"))
 def handle_sub_callback(call):
     target_user_id = int(call.data.split("_")[1])
     clicker_id = call.from_user.id
     
-    # Check if the right person clicked the button
     if clicker_id != target_user_id:
         bot.answer_callback_query(call.id, "⚠️ Yeh button aapke liye nahi hai!", show_alert=True)
         return
 
-    # Re-check channel subscription status
     if is_subscribed(clicker_id):
-        # Unmute user
         try:
             bot.restrict_chat_member(
                 call.message.chat.id,
@@ -122,7 +119,6 @@ def handle_sub_callback(call):
         
         bot.answer_callback_query(call.id, "✅ Aapne channel join kar liya hai! Ab aap group me message kar sakte hain.", show_alert=True)
         
-        # Delete the bot warning message
         try:
             bot.delete_message(call.message.chat.id, call.message.message_id)
         except Exception:
