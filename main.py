@@ -19,7 +19,7 @@ def run_flask():
 
 # --- 2. BOT CONFIGURATION (Fetched securely from Render) ---
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
-CHANNEL_USERNAME = "@HydraEscrowServices"  # Main Channel Handle
+CHANNEL_USERNAME = "@HydraEscrowService"  # Main Channel Handle
 GROUP_USERNAME = "@HydraEscrow"           # Main Group Handle
 
 bot = telebot.TeleBot(BOT_TOKEN)
